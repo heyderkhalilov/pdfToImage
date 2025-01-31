@@ -139,7 +139,7 @@ def slice_inner_rectangles(image_path):
     filename = filename[:index]
     dir_path = dir_path+r"/"+filename
     if not os.path.exists(dir_path):
-      os.makedirs(dir_path)
+        os.makedirs(dir_path)
 
     # Convert to grayscale and threshold
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -160,14 +160,20 @@ def slice_inner_rectangles(image_path):
                     x, y, w, h = cv2.boundingRect(cnt)
                     
                     # Apply size filtering (adjust as needed)
-                    if w > 100 and h > 100:
+                    if w > 100 and h > 50:
                         cropped_image = img[y:y+h, x:x+w]
                         b,g,r = (cropped_image[2, 15])
-                        dominant_color=int(b)+int(r)+int(g)  
+                        dominant_color=int(b)+int(r)+int(g) 
 
-                        if dominant_color>400:                
-                            image_name = questionNoToFileName(cropped_image)                 
-                            cv2.imwrite(dir_path + r"/" + image_name + ".jpg", cropped_image)
+                        if dominant_color>400:               
+                            image_name = questionNoToFileName(cropped_image) 
+                            newFileName = dir_path + r"/" + image_name + ".jpg"
+                            if os.path.isfile(newFileName) :
+                                id=uuid.uuid4() 
+                                newFileName = dir_path + r"/" + str(id) + ".jpg"
+                                                        
+                            cv2.imwrite(newFileName, cropped_image)
+
     except Exception as e:
         print(f"Error: {str(e)}")
 
@@ -203,13 +209,21 @@ def questionNoToFileName(img):
 
 
 def detectQuestion():
-    filename = filedialog.askopenfilename(
+    files = filedialog.askopenfilenames(
         filetypes=[('Images', '*.jpg *.jpeg *.png *.BMP')])
     
-    img = cv2.imread(filename, cv2.IMREAD_COLOR)
+    for filename in files:
+        try:
+            img = cv2.imread(filename, cv2.IMREAD_COLOR)
+            height, width, channels = img.shape
+            b,g,r = (img[2, 15])
+            dominant_color=int(b)+int(r)+int(g)
+            if dominant_color<100:
+                cropped_image = img[6:height-8, 6:width-8]          
+                cv2.imwrite(filename,cropped_image)               
+        except:
+            pass
 
-    cv2.waitKey(0) 
-   
 
 
 openPdf_btn = tk.Button(root, text="PDF faylını ac", command=openPdf)
@@ -224,6 +238,7 @@ convert_btn=tk.Button(root,text = 'Şəkilə çevir', command = convert)
 slice_btn=tk.Button(root,text = 'Şəkli suallara ayır', command = SliceImageToQuestions)
 
 detectQuestion_btn=tk.Button(root,text= " Suallari tap ", command= detectQuestion )
+
  
 openPdf_btn.grid(row=0,column=1)
 first_page_label.grid(row=1,column=0)
@@ -234,7 +249,6 @@ convert_btn.grid(row=3,column=1)
 slice_btn.grid(row=4,column=1)
 
 detectQuestion_btn.grid(row=5,column=1)
-
 
 
 #btn_pdf_to_image.pack(padx=12,pady=5)
